@@ -2,19 +2,33 @@
 import {ref} from 'vue'
 import {create_container, delete_store, get_store} from "../../utils/request/index.js";
 import router from "../../utils/router/index.js";
+import newcontainer from '../widgets/new_container.vue'
 
 const data = ref(null)
 const upload_visible = ref(false)
+const create_container_visible = ref(false)
+const install_info = ref(null)
+
+
+const receiving_parameter = async (newVal) => {
+  install_info.value = newVal
+}
+
+
+const on_install = async (item) => {
+  create_container_visible.value = true
+  install_info.value = item
+}
 
 const init = async () => {
   data.value = await get_store()
   upload_visible.value = false
 }
 
-const create = async (data) => {
-  await create_container(data)
-  // await init()
-  router.push("/Apps")
+
+const create = async () => {
+  await create_container(install_info.value)
+  // router.push("/Apps")
 }
 
 const remove = async (name) => {
@@ -92,7 +106,7 @@ init()
                 <template #default>删除</template>
               </a-button>
             </a-popconfirm>
-            <a-button type="text" size="small" @click="create(item)">
+            <a-button type="text" size="small" @click="on_install(item)">
               <template #default>安装</template>
             </a-button>
           </div>
@@ -110,6 +124,13 @@ init()
     <div>
       <a-upload draggable :custom-request="load"/>
     </div>
+  </a-modal>
+  <a-modal width="1000px" v-model:visible="create_container_visible" @ok="create()"
+           @cancel="create_container_visible = false">
+    <template #title>
+      创建容器
+    </template>
+    <newcontainer :form="install_info" :disabled="!create_container_visible" @on-response="receiving_parameter"></newcontainer>
   </a-modal>
 </template>
 

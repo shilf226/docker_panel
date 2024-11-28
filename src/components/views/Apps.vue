@@ -18,6 +18,7 @@ import {
   containers_remove,
   images_list, create_container
 } from "../../utils/request/index.js";
+import newcontainer from '../widgets/new_container.vue'
 import {useRoute, useRouter} from 'vue-router'
 import mirrorTextArea from '../widgets/mirrorTextArea.vue';
 
@@ -100,15 +101,31 @@ const remove = async (container_id, hostname) => {
   await init()
 }
 
-const create_app = async () => {
+
+const receiving_parameter = async (newVal) => {
+  form.value = newVal
+}
+
+// 导出配置
+const exportjson = async () => {
+  const blob = new Blob([JSON.stringify(form.value)], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'config.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+const create_app = async (newVal) => {
+
   await create_container(form.value)
   await init()
 }
 
 const on_container_info = async (attrs) => {
-
-  code.value = JSON.stringify(attrs, null, 2);
-  console.log(code.value)
+  code.value = attrs
+  // code.value = JSON.stringify(attrs, null, 2);
   containerinfo_visible.value = true
 }
 
@@ -175,148 +192,14 @@ init()
     <template #title>
       创建容器
     </template>
-    <a-scrollbar style="height:600px;overflow: auto;padding: 0 50px">
-      <a-form :model="form" layout="horizontal" auto-label-width>
-        <a-row :gutter="16">
-          <a-col :span="10">
-            <a-form-item field="name" label="容器名称">
-              <a-input v-model="form.hostname" placeholder="容器名称"/>
-            </a-form-item>
-          </a-col>
-          <a-col :span="14">
-            <a-form-item field="image" label="镜像">
-              <a-select v-model="form.image" placeholder="容器镜像" allow-clear allow-create>
-                <a-option v-for="i in image_list" :value="i.RepoTags">{{ i.RepoTags }}</a-option>
-              </a-select>
-            </a-form-item>
-          </a-col>
-        </a-row>
-
-
-        <a-form-item field="command" label="启动命令">
-          <a-input v-model="form.command" placeholder="启动命令"/>
-        </a-form-item>
-        <a-form-item field="restart" label="重启策略">
-          <a-radio-group v-model="form.restart">
-            <a-radio value="always">always</a-radio>
-            <a-radio value="no">no</a-radio>
-            <a-radio value="on-failure">on-failure</a-radio>
-            <a-radio value="on-failure:3">on-failure:3</a-radio>
-            <a-radio value="unless-stopped">unless-stopped</a-radio>
-          </a-radio-group>
-        </a-form-item>
-        <a-form-item field="privileged" label="特权模式">
-          <a-switch v-model="form.privileged"/>
-        </a-form-item>
-
-        <a-form-item field="environment" label="环境变量">
-          <div class="environment">
-            <div class="menu">
-              <a-button class="but" type="outline" @click="form.environment.push({key:'',value: ''})">新增</a-button>
-            </div>
-            <div class="title">
-              <p>名称</p>
-              <p></p>
-              <p>值</p>
-            </div>
-            <div class="view" v-for="(item,index) in form.environment" :key="index">
-              <a-input v-model="item.key" placeholder="Key"/>
-              <p>=</p>
-              <a-input v-model="item.value" placeholder="Value"/>
-              <a-tooltip content="删除">
-                <div class="butt" @click="form.environment.splice(index,1)">
-                  <icon-delete/>
-                </div>
-              </a-tooltip>
-            </div>
-
-          </div>
-        </a-form-item>
-        <a-divider/>
-        <a-form-item field="volumes" label="挂载卷">
-          <div class="environment">
-            <div class="menu">
-              <a-button class="but" type="outline" @click="form.volumes.push({host_path:'',container_path: ''})">新增
-              </a-button>
-            </div>
-            <div class="title">
-              <p>主机路径</p>
-              <p></p>
-              <p>容器路径</p>
-            </div>
-            <div class="view" v-for="(item,index) in form.volumes" :key="index">
-              <a-input v-model="item.host_path" placeholder="主机路径"/>
-              <p>:</p>
-              <a-input v-model="item.container_path" placeholder="容器路径"/>
-              <a-tooltip content="删除">
-                <div class="butt" @click="form.volumes.splice(index,1)">
-                  <icon-delete/>
-                </div>
-              </a-tooltip>
-            </div>
-          </div>
-        </a-form-item>
-        <a-divider/>
-        <a-form-item field="ports" label="端口">
-          <div class="environment">
-            <div class="menu">
-              <a-button class="but" type="outline"
-                        @click="form.ports.push({host_ports:number,container_ports: number})">
-                新增
-              </a-button>
-            </div>
-            <div class="title">
-              <p>主机端口</p>
-              <p></p>
-              <p>容器端口</p>
-            </div>
-            <div class="view" v-for="(item,index) in form.ports" :key="index">
-              <a-input v-model="item.host_ports" placeholder="主机端口"/>
-              <p>:</p>
-              <a-input v-model="item.container_ports" placeholder="容器端口"/>
-              <a-tooltip content="删除">
-                <div class="butt" @click="form.ports.splice(index,1)">
-                  <icon-delete/>
-                </div>
-              </a-tooltip>
-            </div>
-          </div>
-        </a-form-item>
-        <a-form-item field="extra_hosts" label="主机映射">
-          <div class="environment">
-            <div class="menu">
-              <a-button class="but" type="outline"
-                        @click="form.extra_hosts.push({host:'',ip: ''})">
-                新增
-              </a-button>
-            </div>
-            <div class="title">
-              <p>域名</p>
-              <p></p>
-              <p>ip</p>
-            </div>
-            <div class="view" v-for="(item,index) in form.extra_hosts" :key="index">
-              <a-input v-model="item.host" placeholder="域名"/>
-              <p>:</p>
-              <a-input v-model="item.ip" placeholder="ip"/>
-              <a-tooltip content="删除">
-                <div class="butt" @click="form.extra_hosts.splice(index,1)">
-                  <icon-delete/>
-                </div>
-              </a-tooltip>
-            </div>
-          </div>
-        </a-form-item>
-      </a-form>
-      <mirrorTextArea height="300px" :code="JSON.stringify(form, null, 2)"></mirrorTextArea>
-    </a-scrollbar>
-
+    <newcontainer disabled="!create_container_visible" @on-response="receiving_parameter"></newcontainer>
   </a-modal>
-  <a-modal width="1200px" v-model:visible="containerinfo_visible" @ok="handleOk" @cancel="handleCancel">
+  <a-modal width="1000px" v-model:visible="containerinfo_visible" @ok="handleOk" :footer="false">
     <template #title>
       容器信息
     </template>
-    <mirrorTextArea height="500px" :code="code"></mirrorTextArea>
+    <!--    <mirrorTextArea height="500px" :code="code"></mirrorTextArea>-->
+    <newcontainer :form="code" :disabled="containerinfo_visible"></newcontainer>
   </a-modal>
 </template>
 
